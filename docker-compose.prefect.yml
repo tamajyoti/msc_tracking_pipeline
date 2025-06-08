@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: truckmentum_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      - .env
+    
+  serve:
+    build:
+      context: ./serve
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
+  prefect-server:
+    image: prefecthq/prefect:3.4.4-python3.12
+    command: prefect server start --host 0.0.0.0
+    ports:
+      - "4200:4200"
+    environment:
+      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+
+  prefect-agent:
+    build:
+      context: ./pipeline
+      dockerfile: Dockerfile
+    environment:
+      PREFECT_API_URL: http://prefect-server:4200/api
+    depends_on:
+      - prefect-server
+      - postgres
+    env_file:
+      - .env
+    command: sh -c "./wait-for-it.sh postgres:5432 -- ./wait-for-it.sh prefect-server:4200 -- python flow.py"
+
+volumes:
+  pgdata:

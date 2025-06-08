@@ -1,0 +1,27 @@
+.env
+__pycache__/
+.trck_venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+lib/
+lib64/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environments
+.env
+.tvenv
+.prcftvnv
+
+# Storage
+.DS_Store
